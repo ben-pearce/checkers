@@ -1,6 +1,6 @@
-package draughts;
+package checkers;
 
-import draughts.ui.Board;
+import checkers.ui.Board;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
@@ -28,13 +28,13 @@ public class Main extends Application {
 
         Board gb = new Board(800);
         gb.getWhiteChip(0).setVisible(true);
-        gb.getWhiteChip(0).setActive(true);
-        gb.getCell(5).setActive(true);
-        gb.getCell(6).setActive(true);
+        gb.getWhiteChip(0).setInteractive(true);
+        gb.getCell(5).setInteractive(true);
+        gb.getCell(6).setInteractive(true);
 
         VBox vb = new VBox(mb, gb);
         Scene scene = new Scene(vb);
-        primaryStage.setTitle("Draughts");
+        primaryStage.setTitle("Checkers");
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
