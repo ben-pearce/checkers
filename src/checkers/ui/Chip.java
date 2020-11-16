@@ -1,4 +1,4 @@
-package draughts.ui;
+package checkers.ui;
 
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;

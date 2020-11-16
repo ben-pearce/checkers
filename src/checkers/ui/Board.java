@@ -1,4 +1,4 @@
-package draughts.ui;
+package checkers.ui;
 
 import javafx.geometry.Insets;
 import javafx.scene.layout.*;
@@ -29,7 +29,7 @@ public class Board extends GridPane {
     private final int v;
 
     /**
-     * Board UI element for Draughts.
+     * Board UI element for checkers game.
      *
      * @param v The size of the outer pane container.
      */
