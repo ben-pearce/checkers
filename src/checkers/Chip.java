@@ -11,4 +11,12 @@ public class Chip {
     public void setKing(boolean king) {
         this.king = king;
     }
+
+    public Chip(Chip c) {
+        king = c.king;
+    }
+
+    public Chip() {
+
+    }
 }
