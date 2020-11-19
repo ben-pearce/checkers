@@ -139,32 +139,6 @@ public class Checkers {
     }
 
     /**
-     * Moves a chip from one position to another.
-     *
-     * @param s The starting cell index where target chip resides.
-     * @param d The destination cell index where target chip will move to.
-     *
-     * @throws CellAlreadyFilledException   Raised when destination cell has
-     * a chip on it.
-     * @throws CellEmptyException   Raised when starting cell has no chip on it.
-     */
-    public void moveChip(int s, int d) throws CellAlreadyFilledException,
-            CellEmptyException {
-        if(board[s] == null) {
-            throw new CellEmptyException("Tried to move a chip from a cell " +
-                    "that is already empty.");
-        } else if(board[d] != null) {
-            throw new CellAlreadyFilledException( "Tried to move chip into " +
-                    "cell that already has a chip in it.");
-        }
-
-
-        Chip tempChip = board[s];
-        board[s] = null;
-        board[d] = tempChip;
-    }
-
-    /**
      * Moves a chip from one position to another according to the Move object
      * specified.
      *
