@@ -163,9 +163,22 @@ public class Checkers {
             board[move.getCaptured()] = null;
         }
 
-        Chip tempChip = board[move.getStart()];
+        Chip chip = board[move.getStart()];
         board[move.getStart()] = null;
-        board[move.getDest()] = tempChip;
+        board[move.getDest()] = chip;
+
+        if(getCurrentPlayer() == 1) {
+            if(move.getDest() >= 0 && move.getDest() < size/2) {
+                chip.setKing(true);
+            }
+        } else {
+            if(move.getDest() >= board.length - size/2 &&
+                    move.getDest() < board.length) {
+                chip.setKing(true);
+            }
+        }
+
+        setCurrentPlayer(getCurrentPlayer()%2+1);
     }
 
     /**
