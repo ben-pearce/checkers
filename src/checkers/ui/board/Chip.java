@@ -1,4 +1,4 @@
-package checkers.ui;
+package checkers.ui.board;
 
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
@@ -72,7 +72,6 @@ public class Chip extends Circle {
             ds.setOffsetX(0);
             ds.setOffsetY(0);
             this.setEffect(ds);
-            this.setStroke(null);
         } else {
             this.setEffect(null);
         }

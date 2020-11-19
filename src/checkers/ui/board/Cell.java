@@ -1,4 +1,4 @@
-package checkers.ui;
+package checkers.ui.board;
 
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;

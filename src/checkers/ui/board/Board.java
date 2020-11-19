@@ -1,4 +1,4 @@
-package checkers.ui;
+package checkers.ui.board;
 
 import javafx.geometry.Insets;
 import javafx.scene.layout.*;
@@ -122,13 +122,16 @@ public class Board extends GridPane {
                     )));
                     cell.setPrefSize(v/10f, v/10f);
 
-                    Chip blackChip = new Chip(v/20f, v/20f, v*0.04, Color.web("#6c483c"));
-                    Chip whiteChip = new Chip(v/20f, v/20f, v*0.04, Color.web("#f3dea9"));
+                    Chip blackChip = new Chip(v/20f, v/20f, v*0.04,
+                            Color.web("#6c483c"));
+                    Chip whiteChip = new Chip(v/20f, v/20f, v*0.04,
+                            Color.web("#f3dea9"));
 
                     whiteChip.setVisible(false);
                     blackChip.setVisible(false);
 
-                    Text t = new Text(2, v/10f - 2, String.format("%d", cellIdx+1));
+                    Text t = new Text(2, v/10f - 2, String.format("%d",
+                            cellIdx+1));
                     t.setFont(new Font(10));
 
                     cell.getChildren().addAll(blackChip, whiteChip, t);
