@@ -261,13 +261,15 @@ public class Checkers {
 
             for(int d1=0,d2=-1;d1<=1;d1++,d2*=-1) {
                 cell+=d1;
-                if(isCellEmpty(cell) && Math.abs(cell/leap) == row+dir) {
+                if(cell >= 0 && cell < board.length && isCellEmpty(cell) &&
+                        Math.abs(cell/leap) == row+dir) {
                     if(!moves.isCapturing()) {
                         moves.add(new Move(i, cell));
                     }
                 } else {
                     int captureCell = i+leap*2+d2;
-                    if(isCellEmpty(captureCell) &&
+                    if(captureCell >= 0 && captureCell < board.length &&
+                            isCellEmpty(captureCell) &&
                             !c.getClass().isInstance(getChip(cell)) &&
                             Math.abs(captureCell/leap) == row+dir*2) {
                         if(!moves.isCapturing()) {
