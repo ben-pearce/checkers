@@ -67,6 +67,6 @@ public class Move {
      * @return  True if the move is a capturing move.
      */
     public boolean isCapture() {
-        return captured == -1;
+        return captured > -1;
     }
 }
