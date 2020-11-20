@@ -227,7 +227,7 @@ public class Checkers {
     }
 
     /**
-     * Returns all the valid moves a chip at specified cell index can make.
+     * Returns all the valid moves a chip at specified cell can make.
      *
      * Only returns capturing moves in the event that any capturing move can
      * be made.
@@ -286,44 +286,140 @@ public class Checkers {
     }
 
     /**
-     * Returns a HashMap of possible moves that the current player can make.
+     * Returns a HashMap of possible moves that the current player can make
+     * indexed by the cell they can take them from.
      *
      * @return  HashMap of possible moves.
      */
-    public HashMap<Integer,MoveCollection> getValidMoves() {
-        return getValidMoves(this.currentPlayer);
+    public HashMap<Integer,MoveCollection> getValidMovesByCell() {
+        return getValidMovesByCell(getCurrentPlayer());
     }
 
     /**
-     * Returns a HashMap of possible moves that the specified player can make.
-     *
-     * If any of the moves are capturing moves, only the capturing moves will
-     * be returned.
-     *
-     * The HashMap returned where keys are the cell index of the chip and the
-     * values are a collection of Move objects.
+     * Returns a HashMap of possible moves that the specified player can make
+     * indexed by the cell they can take them from.
      *
      * @param player    The player identifier to find moves for.
      * @return  HashMap of possible moves.
      */
-    public HashMap<Integer, MoveCollection> getValidMoves(int player) {
+    public HashMap<Integer, MoveCollection> getValidMovesByCell(int player) {
         HashMap<Integer, MoveCollection> moves = new HashMap<>();
-        boolean hasCapturingMoves = false;
-        for(int i=0;i<board.length;i++) {
-            if(getPlayerByChip(getChip(i)) == player) {
-                MoveCollection chipMoves = getValidMovesForChip(i);
-                if(!hasCapturingMoves && chipMoves.isCapturing()) {
-                    hasCapturingMoves = true;
-                    moves.clear();
-                }
-                if(chipMoves.size() > 0 && (!hasCapturingMoves ||
-                        chipMoves.isCapturing())) {
-                    moves.put(i,chipMoves);
-                }
+        for(Move move: getValidMoves(player)) {
+            if(!moves.containsKey(move.getStart())) {
+                MoveCollection mc = new MoveCollection();
+                mc.setCapturing(move.isCapture());
+                moves.put(move.getStart(), mc);
             }
-
+            moves.get(move.getStart()).add(move);
         }
         return moves;
     }
 
+    /**
+     * Returns a collection of moves that the current player can take.
+     *
+     * @return  Collection of possible moves.
+     */
+    public MoveCollection getValidMoves() {
+        return getValidMoves(getCurrentPlayer());
+    }
+
+    /**
+     * Returns a collection of moves that the specified player can take.
+     *
+     * If any of the moves are capturing moves, only the capturing moves will
+     * be returned.
+     *
+     * @param player    The player identifier to find moves for.
+     * @return  Collection of possible moves.
+     */
+    public MoveCollection getValidMoves(int player) {
+        MoveCollection moves = new MoveCollection();
+        for(int i=0;i<board.length;i++) {
+            if(getPlayerByChip(getChip(i)) == player) {
+                MoveCollection chipMoves = getValidMovesForChip(i);
+                if(!moves.isCapturing() && chipMoves.isCapturing()) {
+                    moves.setCapturing(true);
+                    moves.clear();
+                }
+                if(chipMoves.size() > 0 && (!moves.isCapturing() ||
+                        chipMoves.isCapturing())) {
+                    moves.addAll(chipMoves);
+                }
+            }
+        }
+        return moves;
+    }
+
+    /**
+     * Invokes the minimax algorithm to find the next best possible move for
+     * the current player to take.
+     *
+     * @return  Move object representing the next best move.
+     */
+    public Move getNextBestMove()
+            throws CellEmptyException, CellAlreadyFilledException {
+        return minimaxAndPrune(0,
+                Integer.MIN_VALUE,
+                Integer.MAX_VALUE,
+                currentPlayer,
+                10).getMove();
+    }
+
+    /**
+     * Minimax with alpha-beta pruning.
+     *
+     * Finds the next best move that the maximising player can make.
+     *
+     * @param d Current depth of search tree reached.
+     * @param a Alpha.
+     * @param b Beta.
+     * @param player    The maximising player identifier.
+     * @param maxDepth  The maximum depth the algorithm should search down to.
+     * @return  A MinimaxResult object containing a score and a move.
+     */
+    private MinimaxResult minimaxAndPrune(int d, int a, int b,
+                                          int player, int maxDepth)
+            throws CellEmptyException, CellAlreadyFilledException {
+        MoveCollection moves = getValidMoves();
+        int bestScore = currentPlayer == player ? Integer.MIN_VALUE :
+                Integer.MAX_VALUE;
+        Move bestMove = null;
+
+        if(moves.isEmpty() || d >= maxDepth) {
+            if(getCurrentPlayer() == player) {
+                return new MinimaxResult(null, getPlayerScore());
+            } else {
+                return new MinimaxResult(null, -getPlayerScore());
+            }
+        }
+
+        for(Move move: moves) {
+            Checkers child = new Checkers(this);
+            if(child.getCurrentPlayer() == player) {
+                child.moveChip(move);
+                int currentScore = child.minimaxAndPrune(d+1, a, b,
+                        player, maxDepth).getScore();
+                if(currentScore > bestScore) {
+                    bestScore = currentScore;
+                    bestMove = move;
+                }
+                a = Math.max(currentScore, a);
+            } else {
+                child.moveChip(move);
+                int currentScore = child.minimaxAndPrune(d+1, a, b,
+                        player, maxDepth).getScore();
+                if(currentScore < bestScore) {
+                    bestScore = currentScore;
+                    bestMove = move;
+                }
+                b = Math.min(currentScore, b);
+            }
+
+            if(a >= b) {
+                break;
+            }
+        }
+        return new MinimaxResult(bestMove, bestScore);
+    }
 }

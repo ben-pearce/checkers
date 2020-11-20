@@ -73,7 +73,7 @@ public class Game extends VBox {
      * player can choose a chip to move.
      */
     public void engageMoveChips() {
-        HashMap<Integer, MoveCollection> moves = checkers.getValidMoves();
+        HashMap<Integer, MoveCollection> moves = checkers.getValidMovesByCell();
         IntStream.range(0, checkers.getBoard().length)
                 .filter(i -> !checkers.isCellEmpty(i))
                 .filter(moves::containsKey).forEach(i -> {
