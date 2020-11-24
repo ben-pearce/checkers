@@ -22,6 +22,11 @@ public class Checkers {
     private int currentPlayer;
 
     /**
+     * Collection of moves for when multi-leg move is in progress.
+     */
+    private MoveCollection multiMoves;
+
+    /**
      * Internal representation of Checkers game.
      */
     public Checkers() {
@@ -128,26 +133,40 @@ public class Checkers {
      */
     public void moveChip(Move move) {
         Chip chip = getChip(move.getStart());
-        if(move.isCapture()) {
-            board[move.getCaptured()] = null;
-        }
-
-        Chip chip = board[move.getStart()];
         board[move.getStart()] = null;
         board[move.getDest()] = chip;
 
+        boolean kingConversion = false;
         if(getCurrentPlayer() == 1) {
-            if(move.getDest() >= 0 && move.getDest() < size/2) {
+            if(!chip.isKing() && move.getDest() >= 0 && move.getDest() < size/2) {
                 chip.setKing(true);
+                kingConversion = true;
             }
         } else {
-            if(move.getDest() >= board.length - size/2 &&
+            if(!chip.isKing() && move.getDest() >= board.length - size/2 &&
                     move.getDest() < board.length) {
                 chip.setKing(true);
+                kingConversion = true;
             }
         }
 
-        setCurrentPlayer(getCurrentPlayer()%2+1);
+        if(move.isCapture()) {
+            Chip capturedChip = getChip(move.getCaptured());
+            if(capturedChip.isKing()) {
+                chip.setKing(true);
+            }
+            board[move.getCaptured()] = null;
+
+            MoveCollection multiMoves = getValidMovesForChip(move.getDest());
+            if(multiMoves.isCapturing() && !kingConversion) {
+                this.multiMoves = multiMoves;
+            } else {
+                this.multiMoves = null;
+                setCurrentPlayer(getCurrentPlayer()%2+1);
+            }
+        } else {
+            setCurrentPlayer(getCurrentPlayer()%2+1);
+        }
     }
 
     /**
@@ -156,7 +175,7 @@ public class Checkers {
      * @return  A number representing the total score of the current player.
      */
     public int getPlayerScore() {
-        return getPlayerScore(this.currentPlayer);
+        return getPlayerScore(getCurrentPlayer());
     }
 
     /**
@@ -304,6 +323,9 @@ public class Checkers {
      * @return  Collection of possible moves.
      */
     public MoveCollection getValidMoves(int player) {
+        if(multiMoves != null) {
+            return multiMoves;
+        }
         MoveCollection moves = new MoveCollection();
         for(int i=0;i<board.length;i++) {
             Chip c = getChip(i);
