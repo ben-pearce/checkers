@@ -4,13 +4,18 @@ import checkers.*;
 import checkers.ui.board.Board;
 import checkers.ui.board.Cell;
 import checkers.ui.board.Chip;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+import org.controlsfx.control.StatusBar;
 
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 public class Game extends VBox {
@@ -18,12 +23,14 @@ public class Game extends VBox {
     /**
      * Internal checkers game instance.
      */
-    private Checkers checkers;
+    private final Checkers checkers;
 
     /**
      * Board UI instance.
      */
     private final Board boardUI;
+
+    private final StatusBar statusBar;
 
     /**
      * Game UI.
@@ -44,10 +51,12 @@ public class Game extends VBox {
         MenuBar mb = new MenuBar();
         boardUI = new Board(800);
 
+        statusBar = new StatusBar();
+
         m1.getItems().addAll(mi1, mi2, new SeparatorMenuItem(), mi3);
         m2.getItems().addAll(mi4, mi5);
         mb.getMenus().addAll(m1, m2);
-        this.getChildren().addAll(mb, boardUI);
+        this.getChildren().addAll(mb, boardUI, statusBar);
 
         checkers = new Checkers();
         beginRound();
@@ -58,7 +67,31 @@ public class Game extends VBox {
      */
     public void beginRound() {
         updateBoard();
-        engageMoveChips();
+        statusBar.setText(String.format("Black Heuristic: %d", checkers.h(1)));
+        if(checkers.getCurrentPlayer() == 1) {
+            CompletableFuture
+                    .supplyAsync(checkers::getNextBestMove)
+                    .thenAccept(this::autoMove);
+        } else {
+            engageMoveChips();
+        }
+    }
+
+    /**
+     * Makes a move automatically without player input. Used for simulating
+     * computer moves.
+     *
+     * @param move  The move to make.
+     */
+    public void autoMove(Move move) {
+        checkers.Chip c = checkers.getChip(move.getStart());
+        Chip chip = c.getPlayer() == 1 ?
+                boardUI.getBlackChip(move.getStart()) :
+                boardUI.getWhiteChip(move.getStart());
+        chip.setLifted(true);
+        Timeline tl = new Timeline(new KeyFrame(Duration.millis(1000), e ->
+                placeChip(chip, new MoveCollection(), move)));
+        tl.play();
     }
 
     /**
