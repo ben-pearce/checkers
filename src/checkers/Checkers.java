@@ -3,6 +3,11 @@ package checkers;
 import javafx.util.Pair;
 
 import java.util.HashMap;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class Checkers {
 
@@ -352,64 +357,64 @@ public class Checkers {
      */
     public Move getNextBestMove() {
         MoveCollection moves = getValidMoves();
-        return minimaxAndPrune(0,
-                Integer.MIN_VALUE,
-                Integer.MAX_VALUE,
-                currentPlayer,
-                10).getMove();
+        ExecutorService pool = Executors.newCachedThreadPool();
+
+        return Objects.requireNonNull(moves.stream()
+                .map(move -> {
+                    Checkers child = new Checkers(this);
+                    child.moveChip(move);
+                    return CompletableFuture
+                            .supplyAsync(() -> child.minimax(
+                                    9,
+                                    getCurrentPlayer() % 2 + 1,
+                                    Integer.MIN_VALUE,
+                                    Integer.MAX_VALUE
+                            ), pool)
+                            .thenApply(score -> new Pair<>(score, move));
+                })
+                .collect(Collectors.toList())
+                .stream()
+                .map(CompletableFuture::join)
+                .reduce((a, b) -> a.getKey() > b.getKey() ? a : b)
+                .orElse(null)).getValue();
     }
 
-    /**
-     * Minimax with alpha-beta pruning.
-     *
-     * Finds the next best move that the maximising player can make.
-     *
-     * @param d Current depth of search tree reached.
-     * @param a Alpha.
-     * @param b Beta.
-     * @param player    The maximising player identifier.
-     * @param maxDepth  The maximum depth the algorithm should search down to.
-     * @return  A MinimaxResult object containing a score and a move.
-     */
-        MoveCollection moves = getValidMoves();
-        int bestScore = currentPlayer == player ? Integer.MIN_VALUE :
-                Integer.MAX_VALUE;
-        Move bestMove = null;
+    public int h(int player) {
+        int scoreMaximise = getPlayerScore(player);
+        int scoreMinimise = getPlayerScore(player%2+1);
+        int captures = (int) getValidMoves(player%2+1)
+                        .stream()
+                        .filter(Move::isCapture)
+                        .count();
+        return scoreMaximise - scoreMinimise - captures;
+    }
 
-        if(moves.isEmpty() || d >= maxDepth) {
-            if(getCurrentPlayer() == player) {
-                return new MinimaxResult(null, getPlayerScore());
-            } else {
-                return new MinimaxResult(null, -getPlayerScore());
-            }
+    private int minimax(int d, int p, int a, int b) {
+        MoveCollection moves = getValidMoves();
+        int best = getCurrentPlayer() == p ? Integer.MIN_VALUE :
+                Integer.MAX_VALUE;
+
+        if(moves.isEmpty() || d == 0) {
+            return h(getCurrentPlayer()%2+1);
         }
 
         for(Move move: moves) {
             Checkers child = new Checkers(this);
-            if(child.getCurrentPlayer() == player) {
-                child.moveChip(move);
-                int currentScore = child.minimaxAndPrune(d+1, a, b,
-                        player, maxDepth).getScore();
-                if(currentScore > bestScore) {
-                    bestScore = currentScore;
-                    bestMove = move;
-                }
-                a = Math.max(currentScore, a);
+            child.moveChip(move);
+            int current = child.minimax(d-1, p, a, b);
+            if(getCurrentPlayer() == p) {
+                best = Math.max(best, current);
+                a = Math.max(a, current);
             } else {
-                child.moveChip(move);
-                int currentScore = child.minimaxAndPrune(d+1, a, b,
-                        player, maxDepth).getScore();
-                if(currentScore < bestScore) {
-                    bestScore = currentScore;
-                    bestMove = move;
-                }
-                b = Math.min(currentScore, b);
+                best = Math.min(best, current);
+                b = Math.min(b, current);
             }
 
             if(a >= b) {
                 break;
             }
         }
-        return new MinimaxResult(bestMove, bestScore);
+
+        return best;
     }
 }
