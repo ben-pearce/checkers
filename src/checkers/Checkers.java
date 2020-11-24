@@ -1,8 +1,6 @@
 package checkers;
 
-import checkers.exceptions.BoardSizeException;
-import checkers.exceptions.CellAlreadyFilledException;
-import checkers.exceptions.CellEmptyException;
+import javafx.util.Pair;
 
 import java.util.HashMap;
 
@@ -25,10 +23,8 @@ public class Checkers {
 
     /**
      * Internal representation of Checkers game.
-     *
-     * @throws BoardSizeException   Raised if board size is not multiple of two.
      */
-    public Checkers() throws BoardSizeException {
+    public Checkers() {
         this(10);
     }
 
@@ -36,13 +32,8 @@ public class Checkers {
      * Internal representation of Checkers game.
      *
      * @param size  The dimensions of the board game size x size.
-     * @throws BoardSizeException   Raised if board size is not multiple of two.
      */
-    public Checkers(int size) throws BoardSizeException {
-        if(size%2 != 0) {
-            throw new BoardSizeException("Board size must " +
-                    "be a multiple of two.");
-        }
+    public Checkers(int size) {
         this.size = size;
         this.currentPlayer = 1;
 
@@ -133,19 +124,10 @@ public class Checkers {
      * will be removed from the board.
      *
      * @param move  The move object that represents the move.
-     * @throws CellEmptyException   Raised when starting cell has no chip on it.
-     * @throws CellAlreadyFilledException   Raised when destination cell has
-     *      * a chip on it.
+     * a chip on it.
      */
-    public void moveChip(Move move) throws CellEmptyException,
-            CellAlreadyFilledException {
-        if(board[move.getStart()] == null) {
-            throw new CellEmptyException("Tried to move a chip from a cell " +
-                    "that is already empty.");
-        } else if(board[move.getDest()] != null) {
-            throw new CellAlreadyFilledException( "Tried to move chip into " +
-                    "cell that already has a chip in it.");
-        }
+    public void moveChip(Move move) {
+        Chip chip = getChip(move.getStart());
         if(move.isCapture()) {
             board[move.getCaptured()] = null;
         }
@@ -346,8 +328,8 @@ public class Checkers {
      *
      * @return  Move object representing the next best move.
      */
-    public Move getNextBestMove()
-            throws CellEmptyException, CellAlreadyFilledException {
+    public Move getNextBestMove() {
+        MoveCollection moves = getValidMoves();
         return minimaxAndPrune(0,
                 Integer.MIN_VALUE,
                 Integer.MAX_VALUE,
@@ -367,9 +349,6 @@ public class Checkers {
      * @param maxDepth  The maximum depth the algorithm should search down to.
      * @return  A MinimaxResult object containing a score and a move.
      */
-    private MinimaxResult minimaxAndPrune(int d, int a, int b,
-                                          int player, int maxDepth)
-            throws CellEmptyException, CellAlreadyFilledException {
         MoveCollection moves = getValidMoves();
         int bestScore = currentPlayer == player ? Integer.MIN_VALUE :
                 Integer.MAX_VALUE;

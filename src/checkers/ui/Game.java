@@ -1,9 +1,6 @@
 package checkers.ui;
 
 import checkers.*;
-import checkers.exceptions.BoardSizeException;
-import checkers.exceptions.CellAlreadyFilledException;
-import checkers.exceptions.CellEmptyException;
 import checkers.ui.board.Board;
 import checkers.ui.board.Cell;
 import checkers.ui.board.Chip;
@@ -52,12 +49,8 @@ public class Game extends VBox {
         mb.getMenus().addAll(m1, m2);
         this.getChildren().addAll(mb, boardUI);
 
-        try {
-            checkers = new Checkers();
-            beginRound();
-        } catch (BoardSizeException e) {
-            e.printStackTrace();
-        }
+        checkers = new Checkers();
+        beginRound();
     }
 
     /**
@@ -145,14 +138,9 @@ public class Game extends VBox {
      * @param move  The move chosen by the player.
      */
     public void placeChip(Chip chip, MoveCollection moves, Move move) {
-        try {
-            dropChip(chip, moves);
-            checkers.moveChip(move);
-            beginRound();
-        } catch (CellEmptyException |
-                CellAlreadyFilledException cellEmptyException) {
-            cellEmptyException.printStackTrace();
-        }
+        dropChip(chip, moves);
+        checkers.moveChip(move);
+        beginRound();
     }
 
     /**
