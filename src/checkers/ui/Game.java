@@ -78,10 +78,10 @@ public class Game extends VBox {
                 .filter(i -> !checkers.isCellEmpty(i))
                 .filter(moves::containsKey).forEach(i -> {
             checkers.Chip c = checkers.getChip(i);
-            Chip chip = c instanceof BlackChip ?
+            Chip chip = c.getPlayer() == 1 ?
                     boardUI.getBlackChip(i) : boardUI.getWhiteChip(i);
 
-            if(checkers.getPlayerByChip(c) == checkers.getCurrentPlayer()) {
+            if(c.getPlayer() == checkers.getCurrentPlayer()) {
                 chip.setInteractive(true);
                 chip.setOnMouseReleased(e -> liftChip(chip, moves.get(i)));
             }
@@ -96,7 +96,7 @@ public class Game extends VBox {
         IntStream.range(0, checkers.getBoard().length)
                 .filter(i -> !checkers.isCellEmpty(i)).forEach(i -> {
             checkers.Chip c = checkers.getChip(i);
-            Chip chip = c instanceof BlackChip ?
+            Chip chip = c.getPlayer() == 1 ?
                     boardUI.getBlackChip(i) :
                     boardUI.getWhiteChip(i);
             chip.setOnMouseReleased(null);
@@ -194,10 +194,13 @@ public class Game extends VBox {
             if(board[i] == null) {
                 boardUI.getBlackChip(i).setVisible(false);
                 boardUI.getWhiteChip(i).setVisible(false);
-            } else if(board[i] instanceof WhiteChip) {
+                boardUI.getCrown(i).setVisible(false);
+            } else if(board[i].getPlayer() == 2) {
                 boardUI.getWhiteChip(i).setVisible(true);
-            } else if(board[i] instanceof BlackChip) {
+                boardUI.getCrown(i).setVisible(board[i].isKing());
+            } else if(board[i].getPlayer() == 1) {
                 boardUI.getBlackChip(i).setVisible(true);
+                boardUI.getCrown(i).setVisible(board[i].isKing());
             }
         }
     }

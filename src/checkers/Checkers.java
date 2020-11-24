@@ -50,28 +50,27 @@ public class Checkers {
         int chipCount = (size * (size / 2 - 1)) / 2;
 
         for(int i=0; i<chipCount; i++) {
-            board[i] = new WhiteChip();
+            board[i] = new Chip(2);
         }
         for(int i=board.length - chipCount; i<board.length; i++){
-            board[i] = new BlackChip();
+            board[i] = new Chip(1);
         }
     }
 
     /**
      * Copy constructor for checkers class.
      *
-     * @param chks  The checkers instance to copy.
+     * @param checkers  The checkers instance to copy.
      */
-    public Checkers(Checkers chks) {
-        size = chks.size;
-        currentPlayer = chks.currentPlayer;
-        board = new Chip[chks.getBoard().length];
+    public Checkers(Checkers checkers) {
+        size = checkers.size;
+        currentPlayer = checkers.currentPlayer;
+        board = new Chip[checkers.getBoard().length];
+        multiMoves = checkers.multiMoves;
         for(int i=0;i<board.length;i++) {
-            Chip c = chks.getChip(i);
-            if(c instanceof WhiteChip) {
-                board[i] = new WhiteChip(c);
-            } else if(c instanceof BlackChip) {
-                board[i] = new BlackChip(c);
+            Chip c = checkers.getChip(i);
+            if(c != null) {
+                board[i] = new Chip(c);
             }
         }
     }
@@ -114,18 +113,6 @@ public class Checkers {
      */
     public void setCurrentPlayer(int currentPlayer) {
         this.currentPlayer = currentPlayer;
-    }
-
-    /**
-     * Get player identifier by chip instance.
-     *
-     * White is player 2, black is player 1.
-     *
-     * @param c The chip instance.
-     * @return  The player identifier.
-     */
-    public int getPlayerByChip(Chip c) {
-        return c instanceof WhiteChip ? 2 : c instanceof BlackChip ? 1 : 0;
     }
 
     /**
@@ -213,7 +200,7 @@ public class Checkers {
         int score = 0;
         for(int i=0;i<board.length;i++) {
             Chip c = getChip(i);
-            if(getPlayerByChip(c) == player) {
+            if(c != null && c.getPlayer() == player) {
                 if(c.isKing()) {
                     score += size;
                 } else {
@@ -253,7 +240,7 @@ public class Checkers {
             return moves;
         }
 
-        int dir = c instanceof WhiteChip ? 1 : -1;
+        int dir = c.getPlayer() == 2 ? 1 : -1;
         for(int d=0;d<=(c.isKing()?1:0);d++,dir*=-1) {
             int leap = (size/2)*dir;
             int row = Math.abs(i/leap);
@@ -270,7 +257,8 @@ public class Checkers {
                     int captureCell = i+leap*2+d2;
                     if(captureCell >= 0 && captureCell < board.length &&
                             isCellEmpty(captureCell) &&
-                            !c.getClass().isInstance(getChip(cell)) &&
+                            getChip(cell) != null &&
+                            getChip(cell).getPlayer() != c.getPlayer() &&
                             Math.abs(captureCell/leap) == row+dir*2) {
                         if(!moves.isCapturing()) {
                             moves.clear();
@@ -336,7 +324,8 @@ public class Checkers {
     public MoveCollection getValidMoves(int player) {
         MoveCollection moves = new MoveCollection();
         for(int i=0;i<board.length;i++) {
-            if(getPlayerByChip(getChip(i)) == player) {
+            Chip c = getChip(i);
+            if(c != null && c.getPlayer() == player) {
                 MoveCollection chipMoves = getValidMovesForChip(i);
                 if(!moves.isCapturing() && chipMoves.isCapturing()) {
                     moves.setCapturing(true);
