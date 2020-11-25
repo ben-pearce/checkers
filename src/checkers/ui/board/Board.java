@@ -36,19 +36,27 @@ public class Board extends GridPane {
     private final int v;
 
     /**
+     * The size of the board layout.
+     */
+    private final int size;
+
+    /**
      * Board UI element for checkers game.
      *
      * @param v The size of the outer pane container.
+     * @param size  The size of the board layout.
      */
-    public Board(int v) {
+    public Board(int v, int size) {
         super();
 
-        blackChips = new Chip[50];
-        whiteChips = new Chip[50];
-        cells = new Cell[50];
-        crowns = new Circle[50];
+        int chipCount = size * size / 2;
+        blackChips = new Chip[chipCount];
+        whiteChips = new Chip[chipCount];
+        cells = new Cell[chipCount];
+        crowns = new Circle[chipCount];
 
         this.v = v;
+        this.size = size;
         this.setMinSize(v, v);
 
         this.reset();
@@ -83,10 +91,17 @@ public class Board extends GridPane {
     }
 
     /**
-     * @return Size of board.
+     * @return Resolution of board.
      */
     public int getV() {
         return v;
+    }
+
+    /**
+     * @return Size of board layout.
+     */
+    public int getSize() {
+        return size;
     }
 
     /**
@@ -134,10 +149,11 @@ public class Board extends GridPane {
      */
     public void reset() {
         int cellIdx = 0;
-        for(int col = 0; col < 10; col++) {
-            for(int row = 0; row < 10; row++) {
+        for(int col = 0; col < getSize(); col++) {
+            for(int row = 0; row < getSize(); row++) {
                 boolean isHabitableCell = (row + (col % 2)) % 2 == 1;
                 Pane cell;
+                double cellSize = (double)v/getSize();
                 if(isHabitableCell) {
                     cell = new Cell();
                     cell.setBackground(new Background(new BackgroundFill(
@@ -145,17 +161,19 @@ public class Board extends GridPane {
                             CornerRadii.EMPTY,
                             Insets.EMPTY
                     )));
-                    cell.setPrefSize(v/10f, v/10f);
+                    cell.setPrefSize(cellSize, cellSize);
 
-                    Chip blackChip = new Chip(v/20f, v/20f, v*0.04,
+                    double chipPos = (double)v/(getSize()*2);
+                    double chipSize = (double)v/(getSize()*2.5);
+                    Chip blackChip = new Chip(chipPos, chipPos, chipSize,
                             Color.web("#382723"));
-                    Chip whiteChip = new Chip(v/20f, v/20f, v*0.04,
+                    Chip whiteChip = new Chip(chipPos, chipPos, chipSize,
                             Color.web("#e8d9b0"));
 
-                    Circle crown = new Circle(v/20f, v/20f, v*0.04);
+                    Circle crown = new Circle(chipPos, chipPos, chipSize);
                     crown.setStroke(Color.GOLD);
                     crown.setFill(null);
-                    crown.setStrokeWidth(5);
+                    crown.setStrokeWidth(chipSize*0.15);
                     DropShadow ds = new DropShadow();
                     ds.setOffsetX(0);
                     ds.setOffsetY(0);
@@ -166,9 +184,10 @@ public class Board extends GridPane {
                     blackChip.setVisible(false);
                     crown.setVisible(false);
 
-                    Text t = new Text(2, v/10f - 2, String.format("%d",
-                            cellIdx+1));
-                    t.setFont(new Font(10));
+                    double fontSize = (double)v/(getSize()*8);
+                    Text t = new Text(2, cellSize - 2,
+                            String.valueOf(cellIdx+1));
+                    t.setFont(new Font(fontSize));
 
                     cell.getChildren().addAll(crown, blackChip, whiteChip, t);
 
@@ -185,7 +204,7 @@ public class Board extends GridPane {
                             CornerRadii.EMPTY,
                             Insets.EMPTY
                     )));
-                    cell.setPrefSize(v/10f, v/10f);
+                    cell.setPrefSize(cellSize, cellSize);
                 }
 
                 this.add(cell, row, col);
