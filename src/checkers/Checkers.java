@@ -354,9 +354,11 @@ public class Checkers {
      * Invokes the minimax algorithm to find the next best possible move for
      * the current player to take.
      *
+     *
+     * @param maxDepth  The max depth for minimax.
      * @return  Move object representing the next best move.
      */
-    public Move getNextBestMove() {
+    public Move getNextBestMove(int maxDepth) {
         MoveCollection moves = getValidMoves();
         ExecutorService pool = Executors.newCachedThreadPool();
 
@@ -366,7 +368,7 @@ public class Checkers {
                     child.moveChip(move);
                     return CompletableFuture
                             .supplyAsync(() -> child.minimax(
-                                    9,
+                                    maxDepth,
                                     getCurrentPlayer() % 2 + 1,
                                     Integer.MIN_VALUE,
                                     Integer.MAX_VALUE
