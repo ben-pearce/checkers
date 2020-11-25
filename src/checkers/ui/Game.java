@@ -1,79 +1,213 @@
 package checkers.ui;
 
-import checkers.*;
+import checkers.Checkers;
+import checkers.Move;
+import checkers.MoveCollection;
 import checkers.ui.board.Board;
 import checkers.ui.board.Cell;
 import checkers.ui.board.Chip;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.*;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import org.controlsfx.control.StatusBar;
 
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 public class Game extends VBox {
 
     /**
+     * Event handler fired when game is quit.
+     */
+    private EventHandler<ActionEvent> onGameExit;
+
+    /**
+     * Game configuration object.
+     */
+    private final GameConfig gameConfig;
+
+    /**
      * Internal checkers game instance.
      */
-    private final Checkers checkers;
+    private Checkers checkers;
 
     /**
      * Board UI instance.
      */
     private final Board boardUI;
 
-    private final StatusBar statusBar;
-
     /**
      * Game UI.
      *
      * This class takes input from the user(s) and updates the internal game
      * state.
+     *
+     * @param gameConfig    Game configuration object.
      */
-    public Game() {
+    public Game(GameConfig gameConfig) {
         super();
+
+        this.gameConfig = gameConfig;
 
         Menu m1 = new Menu("Game");
         MenuItem mi1 = new MenuItem("Reset");
-        MenuItem mi2 = new MenuItem("Save");
-        MenuItem mi3 = new MenuItem("Quit");
+        MenuItem mi2 = new MenuItem("Quit");
         Menu m2 = new Menu("Help");
         MenuItem mi4 = new MenuItem("Get A Hint");
         MenuItem mi5 = new MenuItem("How To Play");
         MenuBar mb = new MenuBar();
-        boardUI = new Board(800);
 
-        statusBar = new StatusBar();
+        boardUI = new Board(gameConfig.getResolution(),
+                gameConfig.getBoardSize());
 
-        m1.getItems().addAll(mi1, mi2, new SeparatorMenuItem(), mi3);
+        m1.getItems().addAll(mi1, new SeparatorMenuItem(), mi2);
         m2.getItems().addAll(mi4, mi5);
         mb.getMenus().addAll(m1, m2);
-        this.getChildren().addAll(mb, boardUI, statusBar);
+        this.getChildren().addAll(mb, boardUI);
 
-        checkers = new Checkers();
+        checkers = new Checkers(gameConfig.getBoardSize());
+
+        mi1.setOnAction(e -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Reset");
+            alert.setHeaderText(null);
+            alert.setContentText("Are you sure you want to reset this game?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if(result.orElse(null) == ButtonType.OK) {
+                reset();
+            }
+        });
+
+        mi2.setOnAction(e -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Quit");
+            alert.setHeaderText(null);
+            alert.setContentText("Are you sure you want to quit this game?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if(result.orElse(null) == ButtonType.OK) {
+                onGameExit.handle(null);
+            }
+        });
+
+        mi4.setOnAction(e -> {
+            Alert hintAlert = new Alert(Alert.AlertType.INFORMATION);
+            hintAlert.setTitle("Hint");
+            hintAlert.setHeaderText(null);
+            String player = checkers.getCurrentPlayer() == 1 ? "Black" :
+                    "White";
+            Move move = checkers.getNextBestMove(5);
+            hintAlert.setContentText(String.format("%s, move chip at " +
+                            "position %d to position %d.", player,
+                    move.getStart()+1,
+                    move.getDest()+1));
+            hintAlert.showAndWait();
+        });
+
+        mi5.setOnAction(e -> {
+            Alert helpAlert = new Alert(Alert.AlertType.INFORMATION);
+            helpAlert.setTitle("How To Play");
+            helpAlert.setHeaderText("How To Play Checkers");
+            helpAlert.setContentText(
+                    "The object is to capture all opposing players checkers " +
+                            "or to create a situation where your opponent has" +
+                            " no moves left to make." +
+                            "\n\nCheckers may only move forward.\n\nThere are" +
+                            " two types of move, capturing and non-capturing." +
+                            " Non-capturing moves are a move forward " +
+                            "diagonally to an adjacent square. Capturing " +
+                            "moves are when a chip jumps over an opponent " +
+                            "chip.\n\nOn a capturing move, a player can make " +
+                            "multiple jumps if they land in a position in " +
+                            "which they can make another.\n\nWhen a player is" +
+                            " in a position to make a capturing move, that " +
+                            "move must be taken. If they can make multiple " +
+                            "capturing moves, any of these moves can be taken" +
+                            ".\n\nOnce a chip reaches the opponent far-side " +
+                            "of the board, the chip becomes a king, and can " +
+                            "then move that chip in any direction until the " +
+                            "end of the game.\n\nIf a chip captures an " +
+                            "opposing chip which is already a king, then that" +
+                            " chip becomes a king and the opposing chip is " +
+                            "captured as normal."
+            );
+            helpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            helpAlert.showAndWait();
+        });
+
         beginRound();
+    }
+
+    /**
+     * Sets an event which will be fired once the game has been quit.
+     *
+     * @param onGameExit    The EventHandler to invoke.
+     */
+    public void setOnGameExit(EventHandler<ActionEvent> onGameExit) {
+        this.onGameExit = onGameExit;
     }
 
     /**
      * Moves the game on to the next round.
      */
-    public void beginRound() {
+    private void beginRound() {
         updateBoard();
-        statusBar.setText(String.format("Black Heuristic: %d", checkers.h(1)));
-        if(checkers.getCurrentPlayer() == 1) {
+
+        if(checkers.getValidMoves().size() == 0) {
+            Platform.runLater(this::gameOver);
+        }
+
+        int computerPlayer = gameConfig.isComputerStarts() ? 1 : 2;
+        if(gameConfig.isComputer() &&
+                checkers.getCurrentPlayer() == computerPlayer) {
             CompletableFuture
-                    .supplyAsync(checkers::getNextBestMove)
+                    .supplyAsync(() -> checkers.getNextBestMove(
+                            gameConfig.getComputerDifficulty()
+                    ))
                     .thenAccept(this::autoMove);
         } else {
             engageMoveChips();
+        }
+    }
+
+    /**
+     * Resets the game back to beginning.
+     */
+    private void reset() {
+        boardUI.reset();
+        checkers = new Checkers(gameConfig.getBoardSize());
+        beginRound();
+    }
+
+    /**
+     * Called once the game has been won. Displays a message showing which
+     * player has won the game and the option to rematch or quit.
+     */
+    private void gameOver() {
+        String player = checkers.getCurrentPlayer() == 2 ? "Black" : "White";
+        Alert gameOverAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        gameOverAlert.setTitle("Game Over");
+        gameOverAlert.setHeaderText(null);
+        gameOverAlert.setContentText(String.format("%s wins!", player));
+
+        ButtonType rematchButton = new ButtonType("Rematch");
+        ButtonType quitButton = new ButtonType("Quit",
+                ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        gameOverAlert.getButtonTypes().setAll(rematchButton, quitButton);
+
+        Optional<ButtonType> result = gameOverAlert.showAndWait();
+        if(result.orElse(null) == rematchButton) {
+            reset();
+        } else {
+            onGameExit.handle(null);
         }
     }
 
