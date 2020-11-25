@@ -159,6 +159,7 @@ public class Checkers {
             Chip capturedChip = getChip(move.getCaptured());
             if(capturedChip.isKing()) {
                 chip.setKing(true);
+                kingConversion = true;
             }
             board[move.getCaptured()] = null;
 
