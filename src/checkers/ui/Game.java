@@ -217,7 +217,7 @@ public class Game extends VBox {
      *
      * @param move  The move to make.
      */
-    public void autoMove(Move move) {
+    private void autoMove(Move move) {
         checkers.Chip c = checkers.getChip(move.getStart());
         Chip chip = c.getPlayer() == 1 ?
                 boardUI.getBlackChip(move.getStart()) :
@@ -232,7 +232,7 @@ public class Game extends VBox {
      * Makes all of the available move chips interactive so that the current
      * player can choose a chip to move.
      */
-    public void engageMoveChips() {
+    private void engageMoveChips() {
         HashMap<Integer, MoveCollection> moves = checkers.getValidMovesByCell();
         IntStream.range(0, checkers.getBoard().length)
                 .filter(i -> !checkers.isCellEmpty(i))
@@ -252,7 +252,7 @@ public class Game extends VBox {
      * Makes all chips non-interactive for when cells are being selected or
      * when the computer is making a move.
      */
-    public void disengageMoveChips() {
+    private void disengageMoveChips() {
         IntStream.range(0, checkers.getBoard().length)
                 .filter(i -> !checkers.isCellEmpty(i)).forEach(i -> {
             checkers.Chip c = checkers.getChip(i);
@@ -271,7 +271,7 @@ public class Game extends VBox {
      * @param chip  The UI Chip that has been clicked.
      * @param moves The moves available to that chip.
      */
-    public void liftChip(Chip chip, MoveCollection moves) {
+    private void liftChip(Chip chip, MoveCollection moves) {
         disengageMoveChips();
         chip.setLifted(true);
         chip.setInteractive(true);
@@ -289,7 +289,7 @@ public class Game extends VBox {
      * @param chip  The UI Chip that has been clicked.
      * @param moves The moves available to that chip.
      */
-    public void dropChip(Chip chip, MoveCollection moves) {
+    private void dropChip(Chip chip, MoveCollection moves) {
         chip.setLifted(false);
         chip.setInteractive(false);
         disengageMoveCells(moves);
@@ -304,7 +304,7 @@ public class Game extends VBox {
      * @param moves The moves available to that Chip.
      * @param move  The move chosen by the player.
      */
-    public void placeChip(Chip chip, MoveCollection moves, Move move) {
+    private void placeChip(Chip chip, MoveCollection moves, Move move) {
         dropChip(chip, moves);
         checkers.moveChip(move);
         beginRound();
@@ -317,7 +317,7 @@ public class Game extends VBox {
      * @param chip  The Chip responsible for engaging the cells.
      * @param moves The moves available to that Chip.
      */
-    public void engageMoveCells(Chip chip, MoveCollection moves) {
+    private void engageMoveCells(Chip chip, MoveCollection moves) {
         for(Move move: moves) {
             Cell cell = boardUI.getCell(move.getDest());
             cell.setInteractive(true);
@@ -331,7 +331,7 @@ public class Game extends VBox {
      *
      * @param moves The moves to disengage cells for.
      */
-    public void disengageMoveCells(MoveCollection moves) {
+    private void disengageMoveCells(MoveCollection moves) {
         for(Move move: moves) {
             Cell cell = boardUI.getCell(move.getDest());
             cell.setInteractive(false);
@@ -343,7 +343,7 @@ public class Game extends VBox {
      * Updates the UI board state to match the internal game instance board
      * state.
      */
-    public void updateBoard() {
+    private void updateBoard() {
         checkers.Chip[] board = checkers.getBoard();
         for(int i=0; i<board.length;i++) {
             if(board[i] == null) {
