@@ -360,6 +360,9 @@ public class Checkers {
      */
     public Move getNextBestMove(int maxDepth) {
         MoveCollection moves = getValidMoves();
+        if(moves.size() == 1) {
+            return moves.get(0);
+        }
         ExecutorService pool = Executors.newCachedThreadPool();
 
         return Objects.requireNonNull(moves.stream()
