@@ -354,6 +354,10 @@ public class Checkers {
      * Invokes the minimax algorithm to find the next best possible move for
      * the current player to take.
      *
+     * The minimax evaluation for each possible move takes place in a
+     * separate thread produced by newCachedThreadPool. The results of each
+     * evaluation are then collected and the move associated with the highest
+     * evaluation result is returned.
      *
      * @param maxDepth  The max depth for minimax.
      * @return  Move object representing the next best move.
@@ -385,7 +389,25 @@ public class Checkers {
                 .orElse(null)).getValue();
     }
 
-    public int h(int player) {
+    /**
+     * Heuristic method for evaluating a particular board state from the
+     * perspective of the specified player. Used for the minimax
+     * implementation.
+     *
+     * Player score is calculated for the player and the opponents player score
+     * is calculated and subtracted from the players score.
+     *
+     * Number of capturing moves for the opponent is calculated and
+     * subtracted from the total.
+     *
+     * Result is that the function rewards players for moving closer to the
+     * other side of the board, for capturing opponent chips and for avoiding
+     * situations where its own chips can be captured.
+     *
+     * @param player    The player to calculate the heuristic for.
+     * @return  The heuristic value.
+     */
+    private int heuristic(int player) {
         int scoreMaximise = getPlayerScore(player);
         int scoreMinimise = getPlayerScore(player%2+1);
         int captures = (int) getValidMoves(player%2+1)
@@ -395,13 +417,22 @@ public class Checkers {
         return scoreMaximise - scoreMinimise - captures;
     }
 
+    /**
+     * The minimax implementation.
+     *
+     * @param d Depth to which search tree is explored.
+     * @param p The maximising player identifier.
+     * @param a Alpha.
+     * @param b Beta.
+     * @return  Evaluation result for this board instance.
+     */
     private int minimax(int d, int p, int a, int b) {
         MoveCollection moves = getValidMoves();
         int best = getCurrentPlayer() == p ? Integer.MIN_VALUE :
                 Integer.MAX_VALUE;
 
         if(moves.isEmpty() || d == 0) {
-            return h(getCurrentPlayer()%2+1);
+            return heuristic(getCurrentPlayer()%2+1);
         }
 
         for(Move move: moves) {
