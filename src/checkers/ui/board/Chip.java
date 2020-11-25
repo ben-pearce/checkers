@@ -39,7 +39,7 @@ public class Chip extends Circle {
 
         entered = mouseEvent -> {
             this.setStroke(Color.BLACK);
-            this.setStrokeWidth(5);
+            this.setStrokeWidth(v2*0.15);
         };
 
         exited = mouseEvent -> {
